@@ -1,4 +1,13 @@
 {
-  "name": "ai-bill",
-  "packageManager": "yarn@4.9.2"
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "yarn workspace backend dev",
+    "dev:frontend": "yarn workspace frontend dev",
+    "start:backend": "yarn workspace backend start",
+    "build:frontend": "yarn workspace frontend build"
+  }
 }
