@@ -7,6 +7,7 @@ import fs from "fs-extra";
 import path from "path";
 import { spawn } from "child_process";
 import dotenv from "dotenv";
+
 dotenv.config();
 
 const upload = multer();
@@ -84,11 +85,36 @@ router.post("/", upload.single("file"), async (req, res) => {
     let text = "";
 
     try {
+      // Try to parse as PDF first
       const data = await pdf(buffer);
       text = data.text;
-    } catch (e) {
-      const { data: { text: ocrText } } = await Tesseract.recognize(buffer, "eng");
-      text = ocrText;
+    } catch (pdfError) {
+      console.log("PDF parsing failed, trying OCR...");
+      
+      // If PDF parsing fails, check if it's a PDF and convert to image
+      const fileExtension = req.file.originalname?.toLowerCase().split('.').pop();
+      
+            if (fileExtension === 'pdf') {
+        // For PDF files, try OCR directly on the buffer
+        // Tesseract can sometimes handle PDFs directly, especially if they contain images
+        try {
+          const { data: { text: ocrText } } = await Tesseract.recognize(buffer, "eng");
+          text = ocrText;
+        } catch (ocrError) {
+          console.error("OCR failed on PDF:", ocrError);
+          // If OCR fails on PDF, provide a helpful error message
+          throw new Error("This PDF appears to be image-based and couldn't be processed. Please try uploading a searchable PDF or an image file instead.");
+        }
+      } else {
+        // For non-PDF files, try OCR directly
+        try {
+          const { data: { text: ocrText } } = await Tesseract.recognize(buffer, "eng");
+          text = ocrText;
+        } catch (ocrError) {
+          console.error("OCR failed:", ocrError);
+          throw new Error("Failed to extract text from file");
+        }
+      }
     }
 
     text = text.replace(/\r\n/g, "\n").trim();

@@ -16,6 +16,7 @@ import { ProgressBar } from "@/components/ProgressBar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload, FileText, AlertCircle, Play, Bot, CreditCard, Sparkles } from "lucide-react"
+import { buildApiUrl } from "@/lib/config"
 
 interface Message {
   id: string
@@ -62,6 +63,7 @@ export default function Home() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
   const [uploadSuccess, setUploadSuccess] = useState(false)
+  const [paymentProcessed, setPaymentProcessed] = useState<string | null>(null)
 
   // Reset skip to chat highlight after 3 seconds
   useEffect(() => {
@@ -108,7 +110,7 @@ Account: 12345`
 
     try {
       // Step 1: Ingest the text (25% progress)
-      const ingestResponse = await fetch("http://localhost:4000/api/ingest", {
+      const ingestResponse = await fetch(buildApiUrl("api/ingest"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -123,7 +125,7 @@ Account: 12345`
       const { text } = await ingestResponse.json()
 
       // Step 2: Annotate the text (50% progress)
-      const annotateResponse = await fetch("http://localhost:4000/api/annotate", {
+              const annotateResponse = await fetch(buildApiUrl("api/annotate"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -138,7 +140,7 @@ Account: 12345`
       const annotated = await annotateResponse.json()
 
       // Step 3: Generate snippets (75% progress)
-      const snippetResponse = await fetch("http://localhost:4000/api/snippet", {
+              const snippetResponse = await fetch(buildApiUrl("api/snippet"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -153,7 +155,7 @@ Account: 12345`
       const { snippets } = await snippetResponse.json()
 
       // Step 4: Compose videos (100% progress)
-      const composeResponse = await fetch("http://localhost:4000/api/compose", {
+              const composeResponse = await fetch(buildApiUrl("api/compose"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -186,6 +188,7 @@ Account: 12345`
           timestamp: new Date(),
         },
       ])
+      setPaymentProcessed(null) // Reset payment processed state for new bill
     } catch (err) {
       console.error("Error processing bill:", err)
       setError(`Failed to process bill: ${err instanceof Error ? err.message : 'Unknown error'}`)
@@ -213,7 +216,7 @@ Account: 12345`
     setIsChatLoading(true)
 
     try {
-      const response = await fetch("http://localhost:4000/api/ask", {
+      const response = await fetch(buildApiUrl("api/ask"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -278,7 +281,7 @@ Account: 12345`
         return
       }
 
-      const response = await fetch("http://localhost:4000/api/actions", {
+      const response = await fetch(buildApiUrl("api/actions"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -323,7 +326,7 @@ Account: 12345`
 
     try {
       // Generate Paymentus token directly
-      const tokenResponse = await fetch('http://localhost:4000/api/payment/token/paymentus', {
+      const tokenResponse = await fetch(buildApiUrl('api/payment/token/paymentus'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -402,7 +405,7 @@ Account: 12345`
       formData.append('file', selectedFile)
 
       // Upload file to backend
-      const uploadResponse = await fetch("http://localhost:4000/api/avp", {
+      const uploadResponse = await fetch(buildApiUrl("api/avp"), {
         method: "POST",
         body: formData,
       })
@@ -745,6 +748,18 @@ Account: 12345`
                   const paymentKeys = Object.keys(paymentData).filter(key => key !== 'additionalData')
                   const firstPayment = paymentData[paymentKeys[0]] as any
                   
+                  // Create a unique identifier for this payment
+                  const paymentId = `${firstPayment["reference-number"]}-${firstPayment["payment-amount"]}`
+                  
+                  // Check if this payment has already been processed
+                  if (paymentProcessed === paymentId) {
+                    console.log('Payment already processed, skipping duplicate message')
+                    return
+                  }
+                  
+                  // Mark this payment as processed
+                  setPaymentProcessed(paymentId)
+                  
                   const successMessage: Message = {
                     id: Date.now().toString(),
                     from: "ai",
@@ -752,6 +767,11 @@ Account: 12345`
                     timestamp: new Date(),
                   }
                   setMessages((prev) => [...prev, successMessage])
+                  
+                  // Reset payment processed state after 30 seconds to allow for new payments
+                  setTimeout(() => {
+                    setPaymentProcessed(null)
+                  }, 30000)
                 }}
                 onPaymentError={(error) => {
                   console.error('Payment error:', error)

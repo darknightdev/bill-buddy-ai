@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
+import { config } from "@/lib/config"
 
 interface VideoCarouselProps {
   videos: string[]
@@ -105,7 +106,7 @@ export function VideoCarousel({ videos, initialIndex = 0, onVideoChange }: Video
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
             >
-              <source src={`http://localhost:4000${videos[currentIndex]}`} type="video/mp4" />
+              <source src={`${config.apiBaseUrl}${videos[currentIndex]}`} type="video/mp4" />
               Your browser does not support the video tag.
             </video>
             

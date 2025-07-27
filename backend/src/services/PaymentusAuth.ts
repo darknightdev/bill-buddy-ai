@@ -35,10 +35,6 @@ export class PaymentusAuthService {
 
   async generateToken(request: PaymentusAuthRequest): Promise<PaymentusAuthResponse> {
     try {
-      console.log('Paymentus: Generating token for user:', request.userLogin);
-      console.log('Account number:', request.accountNumber);
-      console.log('Biller:', request.billerConfig.name);
-      console.log('Config:', this.config);
       // Use real Paymentus Auth SDK
       const authClient = new Auth({
         baseUrl: this.config.baseUrl,
