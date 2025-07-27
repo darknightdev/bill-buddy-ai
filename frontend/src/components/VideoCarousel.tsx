@@ -10,22 +10,32 @@ import { cn } from "@/lib/utils"
 interface VideoCarouselProps {
   videos: string[]
   initialIndex?: number
+  onVideoChange?: (index: number) => void
 }
 
-export function VideoCarousel({ videos, initialIndex = 0 }: VideoCarouselProps) {
+export function VideoCarousel({ videos, initialIndex = 0, onVideoChange }: VideoCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isMuted, setIsMuted] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
+  // Update currentIndex when initialIndex changes (for external control)
+  useEffect(() => {
+    setCurrentIndex(initialIndex)
+  }, [initialIndex])
+
   const goToPrevious = () => {
-    setCurrentIndex((prev) => Math.max(0, prev - 1))
+    const newIndex = Math.max(0, currentIndex - 1)
+    setCurrentIndex(newIndex)
     setIsPlaying(false)
+    onVideoChange?.(newIndex)
   }
 
   const goToNext = () => {
-    setCurrentIndex((prev) => Math.min(videos.length - 1, prev + 1))
+    const newIndex = Math.min(videos.length - 1, currentIndex + 1)
+    setCurrentIndex(newIndex)
     setIsPlaying(false)
+    onVideoChange?.(newIndex)
   }
 
   const togglePlay = () => {

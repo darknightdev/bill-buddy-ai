@@ -1,0 +1,13 @@
+# Paymentus Configuration
+PAYMENTUS_ENABLED=true
+PAYMENTUS_PRE_SHARED_KEY=your_test_pre_shared_key_here
+PAYMENTUS_TLA=your_test_tla_here
+PAYMENTUS_BASE_URL=https://secure1.paymentus.com
+
+# Other Payment Providers
+STRIPE_ENABLED=false
+STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key
+STRIPE_PUBLISHABLE_KEY=pk_test_your_stripe_publishable_key
+
+# OpenAI Configuration
+OPENAI_API_KEY=your_openai_api_key_here 

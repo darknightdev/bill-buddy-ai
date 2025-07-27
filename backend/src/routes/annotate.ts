@@ -24,6 +24,8 @@ router.post("/", async (req, res) => {
               dueDate: { type: "string" },
               totalOwed: { type: "number" },
               accountId: { type: "string" },
+              billerId: { type: "string" },
+              billerName: { type: "string" },
               lineItems: {
                 type: "array",
                 items: {
@@ -45,7 +47,10 @@ router.post("/", async (req, res) => {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
-        { role: "system", content: "Extract bill fields and tag with type, group, security, status." },
+        { 
+          role: "system", 
+          content: "Extract bill fields including biller information. Look for biller names, logos, biller codes, or any identifying information about who is sending the bill. Extract billerId as a unique identifier (could be from account number prefix, biller code, or generate from biller name). Extract billerName as the full name of the company/organization sending the bill." 
+        },
         { role: "user", content: text }
       ],
       tools
@@ -84,6 +89,22 @@ router.post("/", async (req, res) => {
           type: "id",
           group: "account",
           security: "private",
+          status: "extracted"
+        }] : []),
+        ...(args.billerId ? [{
+          fieldId: "billerId",
+          value: args.billerId,
+          type: "id",
+          group: "biller",
+          security: "public",
+          status: "extracted"
+        }] : []),
+        ...(args.billerName ? [{
+          fieldId: "billerName",
+          value: args.billerName,
+          type: "text",
+          group: "biller",
+          security: "public",
           status: "extracted"
         }] : []),
         ...(Array.isArray(args.lineItems) ? args.lineItems.map((item: any, i: number) => ({

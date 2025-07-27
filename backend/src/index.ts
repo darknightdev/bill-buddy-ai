@@ -6,6 +6,8 @@ import snippet from "./routes/snippet";
 import compose from "./routes/compose";
 import avp from "./routes/avp"; // Combined pipeline route
 import ask from "./routes/ask";
+import actions from "./routes/actions";
+import payment from "./routes/payment";
 
 const app = express();
 
@@ -27,6 +29,8 @@ app.use("/api/snippet", snippet);
 app.use("/api/compose", compose);
 app.use("/api/avp", avp); // Combined pipeline
 app.use("/api/ask", ask);
+app.use("/api/actions", actions);
+app.use("/api/payment", payment);
 
 // Static file serving
 app.use("/media", express.static("public/media"));
